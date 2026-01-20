@@ -15,11 +15,8 @@ return new class extends Migration
             $table->id('route_id');
             $table->string('route_short_name');
             $table->string('route_long_name');
-            $table->text('route_desc')->nullable();
-            $table->integer('route_type');
-            $table->string('route_url')->nullable();
-            $table->string('route_color', 6)->nullable();
-            $table->string('route_text_color', 6)->nullable();
+            $table->string('route_color', 6);
+            $table->string('route_text_color', 6);
         });
     }
 

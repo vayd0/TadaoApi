@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('trips', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+            $table->id("trip_id");
+            $table->unsignedBigInteger('route_id');
+            $table->unsignedBigInteger('shape_id');
         });
     }
 

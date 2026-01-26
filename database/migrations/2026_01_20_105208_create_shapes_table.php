@@ -12,7 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('shapes', function (Blueprint $table) {
-            $table->id("shape_id");
+            $table -> id();
+            $table -> string("shape_id");
+            $table -> foreign("shape_id") -> references("shape_id") -> on('circuits');
+            $table -> double("shape_pt_lat");
+            $table -> double("shape_pt_lon");
+            $table -> integer("shape_pt_sequence");
         });
     }
 

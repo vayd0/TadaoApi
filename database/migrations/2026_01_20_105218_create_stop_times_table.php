@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,7 +12,13 @@ return new class extends Migration
     {
         Schema::create('stop_times', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->unsignedBigInteger("trip_id");
+            $table->foreign("trip_id")->references("trip_id")->on('trips');
+            $table->unsignedBigInteger("stop_id");
+            $table->foreign(columns: "stop_id")->references("stop_id")->on('stops');
+            $table->time("arrival_time");
+            $table->time("departure_time");
+            $table->integer(column: "stop_sequence");
         });
     }
 

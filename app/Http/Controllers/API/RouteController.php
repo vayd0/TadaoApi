@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Models\Stop;
 use App\Models\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Database\Query\Builder;
+use App\Models\Stop;
 
 class RouteController extends Controller
 {
@@ -46,7 +46,7 @@ class RouteController extends Controller
         $tripsIds = $route->trips->pluck('trip_id');
 
         $stops = Stop::whereHas("trips", function (Builder $query) use($tripsIds) {
-            $query->whereIn('trip_id', $tripsIds);
+            $query->whereIn('trips.trip_id', $tripsIds);
         })->get();
         return response()->json($stops);
     }

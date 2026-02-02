@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Tadao</title>
+        <link
+            href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap"
+            rel="stylesheet"
+        />
+        <!-- Leaflet CSS -->
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        />
+        <style>
+            body {
+                font-family: "Roboto", Arial, sans-serif;
+            }
+            #map {
+                position: fixed;
+                z-index: 0;
+                height: 100vh;
+                width: 100%;
+                margin-bottom: 24px;
+            }
+
+            main {
+                position: fixed;
+                z-index: 1;
+                background-color: white;
+                bottom: 0;
+                padding: 30px 30px 0 30px !important;
+                border-radius: 0 40px 0 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="map"></div>
+        <main style="margin: auto; width: 80vw; padding: 10px">
+            <form action="">
+                <input
+                    type="text"
+                    name="desti"
+                    id="inputDesti"
+                    placeholder="Que voulez-vous voir ?"
+                />
+                <button id="btnDesti">Rechercher</button>
+            </form>
+            <section
+                id="gallery-lignes"
+                style="
+                    height: 20vh;
+                    padding: 10px 0;
+                    overflow-y: scroll;
+                    overflow-x: hidden;
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: 16px;
+                "
+            ></section>
+        </main>
+
+        <!-- Leaflet JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+        <script>
+            const map = L.map("map").setView([50.4319, 2.8314], 13);
+
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 19,
+                attribution: "© OpenStreetMap",
+            }).addTo(map);
+
+            const googleHybrid = L.tileLayer(
+                "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+                {
+                    attribution: "© Google",
+                    maxZoom: 20,
+                },
+            );
+
+            document.addEventListener("DOMContentLoaded", async () => {
+                const res = await fetch("http://localhost:8000/api/trips");
+                const gallery = document.getElementById("gallery-lignes");
+                if (res.ok) {
+                    const tempMarker = [];
+                    const temp = [];
+                    const trips = await res.json();
+                    trips.forEach(async (trip) => {
+                        if (temp.includes(trip.trip_headsign)) return;
+                        const card = document.createElement("div");
+                        card.style.border = "1px solid #ccc";
+                        card.style.borderRadius = "8px";
+                        card.style.padding = "10px";
+                        card.style.background = "#f9f9f9";
+                        card.style.display = "flex";
+                        card.style.flexDirection = "column";
+                        card.style.alignItems = "center";
+                        card.style.width = "30%;";
+                        card.innerHTML = `
+                            <strong>${trip.trip_headsign}</strong>
+                        `;
+                        gallery.appendChild(card);
+
+                        card.addEventListener("click", () => {
+                            showTripOnMap(trip.trip_id);
+                        });
+                        temp.push(trip.trip_headsign);
+                    });
+
+                    document
+                        .getElementById("btnDesti")
+                        .addEventListener("click", async (e) => {
+                            e.preventDefault();
+                            const inputDesti =
+                                document.getElementById("inputDesti");
+
+                            showTripOnMap(inputDesti.value);
+                        });
+                } else {
+                    gallery.innerHTML =
+                        "<p>Erreur lors du chargement des données</p>";
+                    console.error("Erreur lors du chargement des données");
+                }
+
+                async function showTripOnMap(id) {
+                    if (window.stopMarkers) {
+                        window.stopMarkers.forEach(marker => map.removeLayer(marker));
+                    }
+                    window.stopMarkers = [];
+
+                    const response = await fetch(
+                        "http://localhost:8000/api/trips/" + id,
+                    );
+
+                    const stopsRes = await fetch(
+                        "http://localhost:8000/api/trips/" + id + "/stops"
+                    );
+                    if (stopsRes.ok) {
+                        const stops = await stopsRes.json();
+                        stops.forEach(stop => {
+                            const marker = L.marker([stop.stop_lat, stop.stop_lon])
+                                .addTo(map)
+                                .bindPopup(`<strong>${stop.stop_name}</strong><br>${stop.stop_desc || ""}<br>Arrivée: ${stop.pivot.arrival_time}`);
+                            window.stopMarkers.push(marker);
+                        });
+                    }
+
+                    if (response.ok) {
+                        let iti = await response.json();
+                        if (window.currentPolyline) {
+                            map.removeLayer(window.currentPolyline);
+                        }
+
+                        let mapIti = iti.circuit.shapes.map((pt) => [
+                            pt.shape_pt_lat,
+                            pt.shape_pt_lon,
+                        ]);
+
+                        window.currentPolyline = L.polyline(mapIti, {
+                            color: "red",
+                            weight: 4,
+                        }).addTo(map);
+
+                        map.fitBounds(window.currentPolyline.getBounds());
+                    } else {
+                        gallery.innerHTML =
+                            "<p>Erreur lors du chargement des données</p>";
+                        console.error("Erreur lors du chargement des données");
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>

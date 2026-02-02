@@ -23,7 +23,17 @@ class StopController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'stop_id' => 'required|string|unique:App\Models\Stop,stop_id',
+            'stop_name' => 'required|string|max:255',
+            'stop_desc' => 'required|string|max:255',
+            'stop_lat' => 'required|decimal',
+            'stop_lon' => 'required|decimal',
+        ]);
+
+        $stop = Stop::create($validated);
+
+        return response()->json($stop, 201);
     }
 
     /**
@@ -44,7 +54,7 @@ class StopController extends Controller
     /* Retourne les horaires pour un arrêt et une ligne de bus donnés. */
     public function showScheduleForRouteAndStop(Stop $stop, Route $route)
     {
-        return response()->json($stop->trips()->where('route_id', $route->route_id)->select(['trips.trip_id','stop_times.departure_time'])->get());
+        return response()->json($stop->trips()->where('route_id', $route->route_id)->select(['trips.trip_id', 'stop_times.departure_time'])->get());
     }
 
     /**

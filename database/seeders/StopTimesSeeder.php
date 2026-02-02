@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\StopTime;
+use App\Models\Trip;
 class StopTimesSeeder extends Seeder
 {
     /**
@@ -21,11 +21,10 @@ class StopTimesSeeder extends Seeder
                 continue;
             }
 
-            StopTime::create([
-                'trip_id' => $data[0],
+            $trip = Trip::find($data[0]);
+            $trip->stops()->attach($data[3], [
                 'arrival_time' => $data[1],
                 'departure_time' => $data[2],
-                'stop_id' => $data[3],
                 'stop_sequence' => $data[4]
             ]);
         }

@@ -24,7 +24,22 @@ class RouteController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'route_short_name' => 'required|string|max:255|unique:App\Models\Route,route_short_name',
+            'route_long_name' => 'required|string|max:255',
+            'route_color' => 'required|hex_color|max:7',
+            'route_text_color' => 'required|hex_color|max:7'
+        ]);
+        
+        $route = Route::create([
+            'route_id' => (int) $validated['route_short_name'],
+            'route_short_name' => $validated['route_short_name'],
+            'route_long_name' => $validated['route_long_name'],
+            'route_color' => substr($validated['route_color'], 1),
+            'route_text_color' => substr($validated['route_text_color'], 1)
+        ]);
+
+        return response()->json($route, 201);
     }
 
     /**
@@ -45,7 +60,7 @@ class RouteController extends Controller
     {
         $tripsIds = $route->trips->pluck('trip_id');
 
-        $stops = Stop::whereHas("trips", function (Builder $query) use($tripsIds) {
+        $stops = Stop::whereHas("trips", function (Builder $query) use ($tripsIds) {
             $query->whereIn('trips.trip_id', $tripsIds);
         })->get();
         return response()->json($stops);
@@ -56,7 +71,20 @@ class RouteController extends Controller
      */
     public function update(Request $request, Route $route)
     {
-        //
+        $validated = $request->validate([
+            'route_long_name' => 'required|string|max:255',
+            'route_color' => 'required|hex_color|max:7',
+            'route_text_color' => 'required|hex_color|max:7'
+        ]);
+
+        $validated['route_color'] = substr($validated['route_color'], 1);
+
+        $validated['route_text_color'] = substr($validated['route_text_color'], 1);
+
+        $route->update($validated);
+        $route->save();
+
+        return response()->json($route);
     }
 
     /**
@@ -64,6 +92,13 @@ class RouteController extends Controller
      */
     public function destroy(Route $route)
     {
-        //
+        $trips = $route->trips;
+        foreach ($trips as $trip) {
+            $trip->stops()->detach();
+            $trip->delete();
+        }
+        $route->delete();
+
+        return response()->noContent();
     }
 }

@@ -7,5 +7,6 @@ use Illuminate\Database\Eloquent\hasMany;
 class Shape extends Model
 {
     protected $table = "shapes";
+    protected $guarded = [];
     public $timestamps = false;
 }

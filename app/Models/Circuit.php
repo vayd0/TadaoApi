@@ -7,9 +7,10 @@ use App\Models\Shape;
 class Circuit extends Model
 {
     protected $table = "circuits";
-    // protected $primaryKey = 'shape_id';
+    protected $guarded = [];
     public $incrementing = false;
     public $timestamps = false;
+    public $primaryKey = 'shape_id';
     public function trips()
     {
         return $this->hasMany(Trip::class, "shape_id", "shape_id");

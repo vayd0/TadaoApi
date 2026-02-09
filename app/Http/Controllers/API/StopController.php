@@ -86,15 +86,18 @@ class StopController extends Controller
 
         $stop->trips()->detach();
         foreach ($tripsIds as $trip_id) {
-            $trip=Trip::find($trip_id);
-            $stops = $trip -> stops()->orderBy("stop_sequence","desc")->get();
-            $cpt = 1;
-            foreach($stops as $monStop) {
-                if($monStop->pivot->stop_sequence != $cpt) {
+            $trip = Trip::find($trip_id);
+            $stops = $trip->stops;
+
+            for ($cpt = count($stops) - 1; $cpt >= 0; $cpt--) {
+                $monStop = $stops[$cpt];
+                if ($monStop->pivot->stop_sequence != $cpt) {
                     $monStop->pivot->stop_sequence = $cpt;
                     $monStop->pivot->save();
+                } else {
+                    break;
                 }
-            } 
+            }
         }
 
         $stop->delete();

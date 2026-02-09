@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->double('stop_lat');
             $table->double('stop_lon');
             //$table->float('zone_id');
-            $table->string('stop_url');
+            $table->string('stop_url')->nullable();
         });
     }
 

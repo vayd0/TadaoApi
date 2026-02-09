@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Stop;
 use App\Models\Route;
 use Illuminate\Http\Request;
+use App\Models\Trip;
 
 class StopController extends Controller
 {
@@ -27,10 +28,11 @@ class StopController extends Controller
             'stop_id' => 'required|string|unique:App\Models\Stop,stop_id',
             'stop_name' => 'required|string|max:255',
             'stop_desc' => 'required|string|max:255',
-            'stop_lat' => 'required|decimal',
-            'stop_lon' => 'required|decimal',
+            'stop_lat' => 'required|numeric',
+            'stop_lon' => 'required|numeric'
         ]);
 
+        $validated['stop_code'] = $validated['stop_id'];
         $stop = Stop::create($validated);
 
         return response()->json($stop, 201);
@@ -62,7 +64,17 @@ class StopController extends Controller
      */
     public function update(Request $request, Stop $stop)
     {
-        //
+        $validated = $request->validate([
+            'stop_name' => 'required|string|max:255',
+            'stop_desc' => 'required|string|max:255',
+            'stop_lat' => 'required|numeric',
+            'stop_lon' => 'required|numeric'
+        ]);
+
+        $stop->update($validated);
+        $stop->save();
+
+        return response()->json($stop);
     }
 
     /**
@@ -70,6 +82,22 @@ class StopController extends Controller
      */
     public function destroy(Stop $stop)
     {
-        //
+        $tripsIds = $stop->trips->pluck('trip_id');
+
+        $stop->trips()->detach();
+        foreach ($tripsIds as $trip_id) {
+            $trip=Trip::find($trip_id);
+            $stops = $trip -> stops()->orderBy("stop_sequence","desc")->get();
+            $cpt = 1;
+            foreach($stops as $monStop) {
+                if($monStop->pivot->stop_sequence != $cpt) {
+                    $monStop->pivot->stop_sequence = $cpt;
+                    $monStop->pivot->save();
+                }
+            } 
+        }
+
+        $stop->delete();
+        return response()->noContent();
     }
 }
